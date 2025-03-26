@@ -1,17 +1,18 @@
-<script setup>
-import { RouterView } from 'vue-router';
-import Navbar from './components/Navbar.vue';
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { RouterView } from 'vue-router'
+import { useAuthStore } from './store/auth'
 
+const auth = useAuthStore()
+
+onMounted(() => {
+  // E ngarkon user-in kur faqja rifreskohet
+  if (auth.token) {
+    auth.getUser()
+  }
+})
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-100 text-gray-800">
-      <Navbar />
-      <RouterView />
-    </div>
-  </template>
-  
-  <style>
-  </style>
-  
-
+  <RouterView />
+</template>
