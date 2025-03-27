@@ -6,6 +6,9 @@ import Register from "../pages/Register.vue";
 import Dashboard from "../pages/Dashboard.vue";
 import AppLayout from '../layouts/AppLayout.vue'
 import Profile from "../pages/Profile.vue";
+import CreatePost from "../pages/posts/CreatePost.vue";
+import EditPost from "../pages/posts/EditPost.vue";
+import PostDetail from "../pages/posts/PostDetail.vue";
 
 const requireAuth = (to, from, next) => {
     const auth = useAuthStore()
@@ -25,7 +28,10 @@ const routes = [
         { path: 'login', component: Login },
         { path: 'register', component: Register },
         { path: 'dashboard', component: Dashboard, beforeEnter: requireAuth },
-        { path: 'profile', component: Profile, beforeEnter: requireAuth }
+        { path: 'profile', component: Profile, beforeEnter: requireAuth },
+        { path: '/posts/create', component: CreatePost, beforeEnter: requireAuth},
+        { path: '/posts/:id/edit', component: EditPost, beforeEnter: requireAuth},
+        { path: '/posts/:id', component: PostDetail},
       ]
     }
   ]
