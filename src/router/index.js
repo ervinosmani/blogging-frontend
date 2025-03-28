@@ -31,7 +31,7 @@ const routes = [
         { path: 'profile', component: Profile, beforeEnter: requireAuth },
         { path: '/posts/create', component: CreatePost, beforeEnter: requireAuth},
         { path: '/posts/:id/edit', component: EditPost, beforeEnter: requireAuth},
-        { path: '/posts/:id', component: PostDetail},
+        { path: '/posts/:slug', component: PostDetail }
       ]
     }
   ]
