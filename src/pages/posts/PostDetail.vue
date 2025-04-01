@@ -131,6 +131,18 @@ onMounted(async () => {
   await fetchComments()
   loading.value = false
 })
+
+const likePost = async () => {
+  if (!post.value?.id) return;
+
+  try {
+    const res = await axios.post(`/api/posts/${post.value.id}/like`);
+    post.value.likes = res.data.likes;
+    post.value.liked_by_user = res.data.liked;
+  } catch (error) {
+    console.error('Error liking post:', error);
+  }
+};
 </script>
 
 <template>
@@ -138,10 +150,26 @@ onMounted(async () => {
     <div v-if="loading">Loading...</div>
 
     <div v-else-if="post">
-      <h1 class="text-3xl font-bold mb-2">{{ post.title }}</h1>
-      <div class="text-sm text-gray-600 mb-4">
-        By {{ post.user?.name || '' }} | {{ new Date(post.created_at).toLocaleDateString() }}
-      </div>
+      <div class="flex items-center justify-between mb-4">
+  <div>
+    <h1 class="text-3xl font-bold mb-1">{{ post.title }}</h1>
+    <div class="text-sm text-gray-600">
+      By {{ post.user?.name || '' }} · {{ new Date(post.created_at).toLocaleDateString() }}
+    </div>
+  </div>
+
+  <button
+    @click="likePost()"
+    :title="post.liked_by_user ? 'Unlike this post' : 'Like this post'"
+    class="flex items-center space-x-1 text-sm text-gray-600 hover:text-blue-600 transition"
+    >
+      <span
+        :class="[post.liked_by_user ? 'text-blue-600' : 'text-gray-400']"
+        class="text-lg"
+      >❤️</span>
+      <span class="font-medium">{{ post.likes }}</span>
+    </button>
+  </div>
 
       <img
         v-if="post.image"

@@ -30,7 +30,7 @@ const routes = [
         { path: 'dashboard', component: Dashboard, beforeEnter: requireAuth },
         { path: 'profile', component: Profile, beforeEnter: requireAuth },
         { path: '/posts/create', component: CreatePost, beforeEnter: requireAuth},
-        { path: '/posts/:id/edit', component: EditPost, beforeEnter: requireAuth},
+        { path: '/posts/:slug/edit', component: EditPost, beforeEnter: requireAuth },
         { path: '/posts/:slug', component: PostDetail }
       ]
     }

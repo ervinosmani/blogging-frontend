@@ -77,7 +77,7 @@ onMounted(fetchMyPosts)
             </span>
           </td>
           <td class="p-2 border flex gap-3">
-            <RouterLink :to="`/posts/${post.id}/edit`" class="text-blue-600 hover:underline">Edit</RouterLink>
+            <RouterLink :to="`/posts/${post.slug}/edit`" class="text-blue-600 hover:underline">Edit</RouterLink>
             <button @click="handleDelete(post.id)" class="text-red-600 hover:underline">Delete</button>
             <button v-if="post.status === 'draft'" @click="handlePublish(post.slug)" class="text-green-600 hover:underline">
               Publish
