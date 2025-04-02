@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('token', token.value)
     api.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
     await getUser()
-    router.push('/')
+    router.push({ path: '/login', query: { registered: 'true' } })
   }  
 
   const login = async (data) => {

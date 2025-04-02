@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from '../../api/api'
 import { useAuthStore } from '../../store/auth'
 
 const route = useRoute()
+const router = useRouter()
 const slug = route.params.slug as string
 
 const post = ref<any>(null)
@@ -43,6 +45,11 @@ const fetchComments = async () => {
 
 // Post comment
 const submitComment = async () => {
+  if (!auth.user) {
+    router.push('/login')
+    return
+  }
+
   if (!commentText.value.trim()) return
   submitting.value = true
   try {
@@ -60,6 +67,11 @@ const submitComment = async () => {
 
 // Post reply
 const submitReply = async (parentId: number) => {
+  if (!auth.user) {
+    router.push('/login')
+    return
+  }
+
   if (!replyText.value.trim()) return
   try {
     await axios.post(`/api/posts/${post.value.id}/comments`, {
@@ -112,8 +124,13 @@ const deleteComment = async (id: number) => {
   }
 }
 
-// Like
+// Like Comment
 const likeComment = async (id: number) => {
+  if (!auth.user) {
+    router.push('/login')
+    return
+  }
+
   try {
     const res = await axios.post(`/api/comments/${id}/like`)
     const updated = comments.value.find(c => c.id === id)
@@ -133,16 +150,21 @@ onMounted(async () => {
 })
 
 const likePost = async () => {
-  if (!post.value?.id) return;
+  if (!auth.user) {
+    router.push('/login')
+    return
+  }
+
+  if (!post.value?.id) return
 
   try {
-    const res = await axios.post(`/api/posts/${post.value.id}/like`);
-    post.value.likes = res.data.likes;
-    post.value.liked_by_user = res.data.liked;
+    const res = await axios.post(`/api/posts/${post.value.id}/like`)
+    post.value.likes = res.data.likes
+    post.value.liked_by_user = res.data.liked
   } catch (error) {
-    console.error('Error liking post:', error);
+    console.error('Error liking post:', error)
   }
-};
+}
 </script>
 
 <template>

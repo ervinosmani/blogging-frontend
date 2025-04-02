@@ -32,6 +32,12 @@ const handleLogin = async () => {
 <template>
   <div class="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md border">
     <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Sign in to your account</h2>
+    
+    <!-- Notification pas regjistrimit -->
+    <div v-if="$route.query.registered === 'true'" class="text-green-600 text-sm mb-4">
+      Your account was created successfully. Please sign in.
+    </div>
+
     <form @submit.prevent="handleLogin" class="space-y-5">
       <div>
         <label class="block mb-1">Email</label>
