@@ -78,6 +78,12 @@ const fetchPosts = async (page = 1) => {
       links: res.data.links
     }
     currentPage.value = page
+
+    // Shto scroll to top pasi faqja ndryshon
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Failed to load posts.'
   } finally {
@@ -92,7 +98,7 @@ onMounted(fetchPosts)
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-    <!-- Seksioni hyrës (Hero Section) -->
+    <!-- Seksioni hyres (Hero Section) -->
     <section class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-10 mb-16 shadow-sm">
       <div class="max-w-4xl mx-auto text-center">
         <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">

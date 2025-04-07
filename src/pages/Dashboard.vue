@@ -3,13 +3,13 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/api'
 
-// Lista e postimeve të përdoruesit
+// Lista e postimeve te perdoruesit
 const posts = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
 const router = useRouter()
 
-// Variablat për pagination
+// Variablat per pagination
 const page = ref(1)
 const totalPages = ref(1)
 
@@ -28,7 +28,7 @@ const fetchMyPosts = async () => {
   }
 }
 
-// Fshije një postim
+// Fshije nje postim
 const handleDelete = async (id: number) => {
   if (!confirm('Are you sure you want to delete this post?')) return
 
@@ -40,7 +40,7 @@ const handleDelete = async (id: number) => {
   }
 }
 
-// Publiko një postim (nëse është draft)
+// Publiko nje postim (nese eshte draft)
 const handlePublish = async (slug: string) => {
   try {
     const res = await api.post(`/api/posts/${slug}/publish`)
@@ -52,10 +52,10 @@ const handlePublish = async (slug: string) => {
   }
 }
 
-// Ngarko të dhënat kur komponenti ngarkohet
+// Ngarko te dhenat kur komponenti ngarkohet
 onMounted(fetchMyPosts)
 
-// Rifresko të dhënat sa herë që ndryshon faqja
+// Rifresko te dhenat sa here qe ndryshon faqja
 watch(page, () => {
   fetchMyPosts()
 })
@@ -97,48 +97,48 @@ watch(page, () => {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="post in posts"
-            :key="post.id"
-            class="border-t text-sm hover:bg-gray-50 transition"
-          >
-            <td class="px-4 py-3 font-medium text-gray-800">{{ post.title }}</td>
-            <td class="px-4 py-3">
-              <span
-                :class="post.status === 'published'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-yellow-100 text-yellow-700'"
-                class="px-2 py-1 rounded-full text-xs font-semibold capitalize"
-              >
-                {{ post.status }}
-              </span>
-            </td>
+  <tr
+    v-for="post in posts"
+    :key="post.id"
+    class="border-t text-sm hover:bg-gray-50 transition"
+  >
+    <td class="px-4 py-3 font-medium text-gray-800" data-label="Title">{{ post.title }}</td>
+    <td class="px-4 py-3" data-label="Status">
+      <span
+        :class="post.status === 'published'
+          ? 'bg-green-100 text-green-700'
+          : 'bg-yellow-100 text-yellow-700'"
+        class="px-2 py-1 rounded-full text-xs font-semibold capitalize"
+      >
+        {{ post.status }}
+      </span>
+    </td>
 
-            <td class="px-4 py-3">{{ post.likes_count ?? 0 }}</td>
+    <td class="px-4 py-3" data-label="Likes">{{ post.likes_count ?? 0 }}</td>
 
-            <td class="px-4 py-3 space-x-3 whitespace-nowrap">
-              <RouterLink
-                :to="`/posts/${post.slug}/edit`"
-                class="text-blue-600 hover:underline font-medium"
-              >
-                Edit
-              </RouterLink>
-              <button
-                @click="handleDelete(post.id)"
-                class="text-red-600 hover:underline font-medium"
-              >
-                Delete
-              </button>
-              <button
-                v-if="post.status === 'draft'"
-                @click="handlePublish(post.slug)"
-                class="text-green-600 hover:underline font-medium"
-              >
-                Publish
-              </button>
-            </td>
-          </tr>
-        </tbody>
+    <td class="px-4 py-3 space-x-3 whitespace-nowrap" data-label="Actions">
+      <RouterLink
+        :to="`/posts/${post.slug}/edit`"
+        class="text-blue-600 hover:underline font-medium"
+      >
+        Edit
+      </RouterLink>
+      <button
+        @click="handleDelete(post.id)"
+        class="text-red-600 hover:underline font-medium"
+      >
+        Delete
+      </button>
+      <button
+        v-if="post.status === 'draft'"
+        @click="handlePublish(post.slug)"
+        class="text-green-600 hover:underline font-medium"
+      >
+        Publish
+      </button>
+    </td>
+  </tr>
+</tbody>
       </table>
     </div>
 
@@ -164,35 +164,69 @@ watch(page, () => {
 </template>
 
 <style scoped>
-/* Stilimi responsive i tabelës për mobile */
+/* Stilimi responsive i tabeles per mobile */
 @media (max-width: 640px) {
-  table thead {
-    display: none;
-  }
-  table, tbody, tr, td {
+  table {
     display: block;
     width: 100%;
   }
-  tr {
-    margin-bottom: 1rem;
+
+  thead {
+    display: none;
+  }
+
+  tbody, tr {
+    display: flex;
+    flex-direction: column;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
     overflow: hidden;
+    background-color: white;
   }
+
   td {
-    padding: 1rem;
-    border: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
     position: relative;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
   }
+
+  td:last-child {
+    border-bottom: none;
+  }
+
   td::before {
     content: attr(data-label);
-    position: absolute;
-    left: 1rem;
-    top: 1rem;
-    font-weight: bold;
+    font-weight: 600;
     text-transform: uppercase;
-    font-size: 0.75rem;
     color: #6b7280;
+    margin-right: 1rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* Tek butonat, lejo wrap per mos me dal jashte */
+  td[data-label="Actions"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
   }
 }
+td[data-label="Actions"] {
+    flex-direction: row; /* rresht */
+    justify-content: flex-end; /* shfaq ne te djathte */
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  td[data-label="Actions"] a,
+  td[data-label="Actions"] button {
+    padding: 0;
+    margin: 0;
+    margin-left: 123px;
+  }
 </style>

@@ -24,7 +24,7 @@ const fetchPost = async () => {
     content.value = post.content
     category.value = post.category
     postId.value = post.id
-    imageUrl.value = post.image // vetëm emri ose path i imazhit
+    imageUrl.value = post.image // vetem emri ose path i imazhit
   } catch (err) {
     error.value = 'Post not found'
   } finally {

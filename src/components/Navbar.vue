@@ -36,7 +36,7 @@ const linkClass = (path: string) => {
         Blog<span class="text-gray-800">Platform</span>
       </div>
 
-      <!-- Hamburger për mobile -->
+      <!-- Hamburger per mobile -->
       <button
         class="sm:hidden text-gray-700 focus:outline-none"
         @click="isOpen = !isOpen"
@@ -70,25 +70,27 @@ const linkClass = (path: string) => {
       </div>
     </div>
 
-    <!-- Linket për mobile (kur hapet hamburger menu) -->
-    <div
-      class="sm:hidden px-6 pb-4 space-y-2 text-sm font-medium transition-all duration-300"
-      v-show="isOpen"
-    >
-      <RouterLink :to="'/'" :class="linkClass('/')">Home</RouterLink>
+    <!-- Mobile menu dropdown -->
+    <transition name="fade">
+      <div
+        v-if="isOpen"
+        class="sm:hidden bg-white px-6 py-4 border-t border-gray-200 space-y-4 text-sm font-medium flex flex-col"
+      >
+        <RouterLink :to="'/'" :class="linkClass('/')">Home</RouterLink>
 
-      <template v-if="!auth.user">
-        <RouterLink :to="'/login'" :class="linkClass('/login')">Login</RouterLink>
-        <RouterLink :to="'/register'" :class="linkClass('/register')">Register</RouterLink>
-      </template>
+        <template v-if="!auth.user">
+          <RouterLink :to="'/login'" :class="linkClass('/login')">Login</RouterLink>
+          <RouterLink :to="'/register'" :class="linkClass('/register')">Register</RouterLink>
+        </template>
 
-      <template v-else>
-        <RouterLink :to="'/dashboard'" :class="linkClass('/dashboard')">Dashboard</RouterLink>
-        <button @click="handleLogout" class="text-red-500 hover:text-red-600">
-          Logout
-        </button>
-      </template>
-    </div>
+        <template v-else>
+          <RouterLink :to="'/dashboard'" :class="linkClass('/dashboard')">Dashboard</RouterLink>
+          <button @click="handleLogout" class="text-left text-red-500 hover:text-red-600">
+            Logout
+          </button>
+        </template>
+      </div>
+    </transition>
   </nav>
 </template>
 
@@ -96,5 +98,15 @@ const linkClass = (path: string) => {
 /* Transicion smooth per animacionet */
 [v-cloak] {
   display: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

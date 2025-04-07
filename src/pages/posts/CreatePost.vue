@@ -66,71 +66,51 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="max-w-3xl mx-auto mt-10 bg-white p-6 shadow rounded-md">
+  <div class="h-screen overflow-hidden bg-gray-50 px-4 pt-20">
+    <div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 shadow rounded-md">
       <h1 class="text-2xl font-bold mb-6">Create a New Post</h1>
-  
+
       <form @submit.prevent="handleSubmit" class="space-y-5">
+        <!-- Title -->
         <div>
           <label class="block mb-1 font-medium text-sm">Title</label>
-          <input
-            v-model="title"
-            type="text"
-            class="w-full p-2 border rounded"
-            required
-          />
+          <input v-model="title" type="text" class="w-full p-2 border rounded" required />
         </div>
-  
+
+        <!-- Content -->
         <div>
           <label class="block mb-1 font-medium text-sm">Content</label>
-          <textarea
-            v-model="content"
-            rows="6"
-            class="w-full p-2 border rounded resize-none"
-            required
-          ></textarea>
+          <textarea v-model="content" rows="5" class="w-full p-2 border rounded resize-none" required></textarea>
         </div>
-  
+
+        <!-- Category -->
         <div>
           <label class="block mb-1 font-medium text-sm">Category</label>
-          <select
-            v-model="category"
-            class="w-full p-2 border rounded"
-            required
-          >
+          <select v-model="category" class="w-full p-2 border rounded" required>
             <option value="" disabled>Select a category</option>
-            <option
-              v-for="cat in categories"
-              :key="cat"
-              :value="cat"
-            >
-              {{ cat }}
-            </option>
+            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
         </div>
-  
+
+        <!-- Image -->
         <div>
           <label class="block mb-1 font-medium text-sm">Image (optional)</label>
-          <input
-            type="file"
-            @change="handleFileUpload"
-            accept="image/*"
-            class="w-full"
-          />
+          <input type="file" @change="handleFileUpload" accept="image/*" class="w-full" />
         </div>
-  
+
+        <!-- Checkbox -->
         <div class="flex items-center space-x-2">
-          <input
-            id="published"
-            type="checkbox"
-            v-model="isPublished"
-            class="form-checkbox"
-          />
+          <input id="published" type="checkbox" v-model="isPublished" class="form-checkbox" />
           <label for="published" class="text-sm">Publish now</label>
         </div>
-  
-        <div v-if="message && !error" class="bg-green-100 text-green-800 px-4 py-2 rounded">{{ message }}</div>
+
+        <!-- Feedback -->
+        <div v-if="message && !error" class="bg-green-100 text-green-800 px-4 py-2 rounded">
+          {{ message }}
+        </div>
         <div v-else-if="error" class="text-red-600 text-sm">{{ error }}</div>
 
+        <!-- Submit -->
         <button
           type="submit"
           class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
@@ -140,5 +120,5 @@ const handleSubmit = async () => {
         </button>
       </form>
     </div>
-  </template>
-  
+  </div>
+</template>
