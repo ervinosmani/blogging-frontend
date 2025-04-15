@@ -14,5 +14,5 @@ onMounted(() => {
 </script>
 
 <template>
-  <RouterView />
+  <RouterView :key="$route.fullPath" />
 </template>

@@ -55,12 +55,22 @@ const filteredPosts = computed(() => {
 // Kur klikohet nje link nga pagination
 const handlePagination = (link: any) => {
   if (link.url) {
-    // Marr numrin e faqes nga URL
     const url = new URL(link.url)
     const page = url.searchParams.get('page')
     if (page) {
       fetchPosts(Number(page))
     }
+  }
+}
+
+// Funksion per te ndryshuar statusin e like
+const toggleLike = async (post: any) => {
+  try {
+    const res = await api.post(`/api/posts/${post.id}/like`)
+    post.liked_by_user = res.data.liked
+    post.likes_count = res.data.likes
+  } catch (err) {
+    console.error('Gabim gjate shtimit te like:', err)
   }
 }
 
@@ -79,151 +89,144 @@ const fetchPosts = async (page = 1) => {
     }
     currentPage.value = page
 
-    // Shto scroll to top pasi faqja ndryshon
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    })
+    // Kthe ne krye te faqes kur ngarkohen postet
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to load posts.'
+    error.value = err.response?.data?.message || 'Deshtoi ngarkimi i postimeve.'
   } finally {
     loading.value = false
   }
 }
 
-// Ngarkon postimet kur komponenti hapet
+// Ngarkon postimet kur komponenti ngarkohet per here te pare
 onMounted(fetchPosts)
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-
-    <!-- Seksioni hyres (Hero Section) -->
-    <section class="bg-gradient-to-br from-blue-50 to-white rounded-xl p-10 mb-16 shadow-sm">
-      <div class="max-w-4xl mx-auto text-center">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
-          Welcome to <span class="text-blue-600">DevBlog</span>
-        </h1>
-        <p class="text-lg text-gray-600 mb-6">
-          Discover inspiring posts, share your ideas, and join a growing community of developers and creatives.
-        </p>
-        <RouterLink
-          to="/posts/create"
-          class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
-        >
-          Start Writing →
-        </RouterLink>
-      </div>
+  <div class="bg-neutral-950 text-white min-h-screen pb-20">
+    <!-- Hero Section -->
+    <section class="text-center py-24 px-6 bg-gradient-to-br from-neutral-900 to-neutral-800">
+      <h1 class="text-4xl sm:text-6xl font-extrabold mb-4 tracking-tight">
+        <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-transparent bg-clip-text">Creative Minds</span><br />
+        Inspire the Web
+      </h1>
+      <p class="text-lg text-gray-400 mb-6 max-w-2xl mx-auto">Explore thoughts, write freely, and connect with developers & dreamers.</p>
+      <RouterLink
+        to="/posts/create"
+        class="inline-block bg-gradient-to-r from-pink-600 to-purple-600 px-6 py-3 rounded-full font-semibold hover:scale-105 transition"
+      >
+        ✍️ Start Writing
+      </RouterLink>
     </section>
 
-    <!-- Titulli dhe pershkrimi i seksionit te postimeve -->
-    <div class="text-center mb-10">
-      <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">Discover Fresh Ideas</h1>
-      <p class="text-gray-600 text-lg">Read insightful articles, share your voice, and connect with the community.</p>
+    <!-- Search & Filters -->
+    <div class="max-w-4xl mx-auto -mt-12 z-10 relative px-4">
+      <div class="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row gap-4">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search..."
+          class="w-full bg-neutral-800 border border-neutral-700 px-4 py-3 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+        <select
+          v-model="selectedCategory"
+          class="w-full md:w-60 bg-neutral-800 border border-neutral-700 px-4 py-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          <option v-for="category in categories" :key="category" :value="category">
+            {{ category === 'all' ? 'All Categories' : category }}
+          </option>
+        </select>
+      </div>
     </div>
 
-    <!-- Fusha e kerkimit -->
-    <div class="max-w-md mx-auto mb-10">
-      <input
-        v-model="search"
-        type="text"
-        placeholder="Search posts..."
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-      />
-    </div>
+    <!-- Posts -->
+    <div class="max-w-7xl mx-auto px-6 mt-20">
+      <div v-if="loading" class="text-center text-gray-400">Loading posts...</div>
+      <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
+      <div v-else-if="filteredPosts.length === 0" class="text-center text-gray-500">No posts found.</div>
 
-    <!-- Dropdown per filtrimin sipas kategorise -->
-    <div class="max-w-md mx-auto mb-10">
-      <select
-        v-model="selectedCategory"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
-      >
-        <option v-for="category in categories" :key="category" :value="category">
-          {{ category === 'all' ? 'All categories' : category }}
-        </option>
-      </select>
-    </div>
+      <div v-else class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Karta e postimit -->
+        <div
+          v-for="post in filteredPosts"
+          :key="post.id"
+          class="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl overflow-hidden border border-neutral-700 transition hover:shadow-lg hover:border-purple-600"
+        >
+          <!-- Karta e klikueshme me overlay ne te gjithe siperfaqen -->
+          <RouterLink :to="`/posts/${post.slug}`" class="relative block group">
+            <div class="relative h-52 overflow-hidden">
+              <img
+                v-if="post.image"
+                :src="`${baseURL}/storage/${post.image}`"
+                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <!-- Overlay ne te gjithe div-in, jo vetem mbi img -->
+              <div
+                class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+              >
+                <span class="text-white text-sm font-semibold tracking-wider uppercase">View Post</span>
+              </div>
+            </div>
+          </RouterLink>
 
-    <!-- Gjendja nese postimet po ngarkohen -->
-    <div v-if="loading" class="text-center text-gray-500">Loading posts...</div>
-
-    <!-- Nese ka gabim -->
-    <div v-else-if="error" class="text-center text-red-600 font-semibold">{{ error }}</div>
-
-    <!-- Nese nuk ka postime -->
-    <div v-else-if="filteredPosts.length === 0" class="text-center text-gray-500">No posts found.</div>
-
-    <!-- Gridi me postime -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-      <RouterLink
-        v-for="post in filteredPosts"
-        :key="post.id"
-        :to="`/posts/${post.slug}`"
-        class="group bg-white rounded-xl overflow-hidden shadow hover:shadow-xl transition duration-300 flex flex-col"
-      >
-        <!-- Imazhi i postimit -->
-        <div class="relative">
-          <img
-            v-if="post.image"
-            :src="`${baseURL}/storage/${post.image}`"
-            alt="Post image"
-            class="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <!-- Overlay kur kalohet me mouse -->
-          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition duration-300 flex items-center justify-center">
-            <span class="text-white text-sm font-semibold opacity-0 group-hover:opacity-100">Read more →</span>
-          </div>
-        </div>
-
-        <!-- Detajet e postimit -->
-        <div class="p-5 flex-1 flex flex-col justify-between">
-          <div>
-            <h2 class="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition">{{ post.title }}</h2>
-
-            <div class="mt-2 text-sm text-gray-500 flex items-center justify-between">
-              <span class="capitalize bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-xs font-medium">
-                {{ post.category }}
-              </span>
-              <span class="text-xs text-gray-400">{{ new Date(post.created_at).toLocaleDateString() }}</span>
+          <!-- Informacionet poshte imazhit -->
+          <div class="p-5 space-y-3">
+            <RouterLink :to="`/posts/${post.slug}`">
+              <h2 class="text-lg font-semibold hover:text-purple-400 transition">{{ post.title }}</h2>
+            </RouterLink>
+            <div class="flex justify-between text-xs text-gray-400">
+              <span class="bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded-full">{{ post.category }}</span>
+              <span>{{ new Date(post.created_at).toLocaleDateString() }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
+              <span>👤 {{ post.user?.name || 'Unknown' }}</span>
+              <div class="flex items-center gap-4">
+                <button
+                  @click.stop="$router.push(`/posts/${post.slug}#comments`)"
+                  class="hover:text-purple-400 flex items-center gap-1 transition"
+                >
+                  <i class="fa-regular fa-comment"></i>
+                  {{ post.comments_count || 0 }}
+                </button>
+                <button
+                  @click.stop.prevent="toggleLike(post)"
+                  class="hover:text-pink-500 flex items-center gap-1 transition"
+                >
+                  <i :class="[post.liked_by_user ? 'fa-solid text-pink-500' : 'fa-regular text-gray-500', 'fa-heart']"></i>
+                  {{ post.likes_count || 0 }}
+                </button>
+              </div>
             </div>
           </div>
-
-          <div class="mt-4 text-xs text-gray-400">
-            By {{ post.user?.name || 'Unknown author' }}
-          </div>
         </div>
-      </RouterLink>
-    </div>
+      </div>
 
-    <!-- Pagination - shfaqet vetem kur nuk ka filtrim -->
-    <div
-      v-if="!isFiltering"
-      class="mt-12 flex justify-center gap-2 flex-wrap"
-    >
-      <button
-        v-for="(link, index) in pagination.links"
-        :key="index"
-        :disabled="!link.url"
-        @click="handlePagination(link)"
-        v-html="link.label"
-        class="px-4 py-2 text-sm rounded border hover:bg-blue-100 transition"
-        :class="{
-          'bg-blue-600 text-white': link.active,
-          'text-gray-500': !link.url,
-          'cursor-not-allowed': !link.url
-        }"
-      ></button>
+      <!-- Pagination -->
+      <div v-if="!isFiltering" class="mt-16 flex justify-center gap-2 flex-wrap">
+        <button
+          v-for="(link, index) in pagination.links"
+          :key="index"
+          :disabled="!link.url"
+          @click="handlePagination(link)"
+          v-html="link.label"
+          class="px-4 py-2 rounded-lg border border-neutral-700 bg-neutral-800 text-white hover:bg-purple-700 transition"
+          :class="{
+            'bg-purple-600 text-white': link.active,
+            'text-gray-500': !link.url,
+            'cursor-not-allowed': !link.url
+          }"
+        ></button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Stilim i shiritit te scroll-it */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
+  background-color: #a855f7;
   border-radius: 3px;
 }
 </style>

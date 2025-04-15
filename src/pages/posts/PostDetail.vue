@@ -205,7 +205,7 @@ onMounted(async () => {
       </div>
 
       <!-- Comments -->
-      <div class="mt-16">
+      <div class="mt-16" id="comments">
         <h2 class="text-2xl font-bold mb-4">Comments ({{ comments.length }})</h2>
 
         <!-- Comment form -->
@@ -341,5 +341,9 @@ onMounted(async () => {
 <style scoped>
 textarea {
   font-family: inherit;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 </style>
