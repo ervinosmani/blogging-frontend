@@ -1,76 +1,78 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from '../../api/api'
 import { useAuthStore } from '../../store/auth'
 
+// Marrim slug-un e postit nga URL
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
 
+// Variablat reaktive per postin, komentet dhe gjendjen e nderfaqes
 const post = ref<any>(null)
-const loading = ref(true)
 const comments = ref<any[]>([])
 const commentText = ref('')
-const auth = useAuthStore()
-const submitting = ref(false)
-
+const replyText = ref('')
+const replyingTo = ref<number | null>(null)
 const isEditing = ref<number | null>(null)
 const editedContent = ref('')
+const submitting = ref(false)
+const loading = ref(true)
 
-const replyingTo = ref<number | null>(null)
-const replyText = ref('')
+// Marrim perdoruesin e autentikuar nga store
+const auth = useAuthStore()
 
-// Fetch post
+// Funksioni per te marre postin
 const fetchPost = async () => {
   try {
     const res = await axios.get(`/api/posts/slug/${slug}`)
     post.value = res.data
-  } catch (error) {
-    console.error('Error fetching post:', error)
+  } catch (err) {
+    console.error('Gabim gjate marrjes se postit:', err)
   }
 }
 
-// Fetch comments
+// Funksioni per te marre komentet e postit
 const fetchComments = async () => {
-  if (!post.value) return
   try {
     const res = await axios.get(`/api/posts/${post.value.id}/comments`)
     comments.value = res.data
-  } catch (error) {
-    console.error('Error fetching comments:', error)
+  } catch (err) {
+    console.error('Gabim gjate marrjes se komenteve:', err)
   }
 }
 
-// Post comment
-const submitComment = async () => {
-  if (!auth.user) {
-    router.push('/login')
-    return
+// Funksioni per te pelqyer postin
+const likePost = async () => {
+  if (!auth.user) return router.push('/login')
+  try {
+    const res = await axios.post(`/api/posts/${post.value.id}/like`)
+    post.value.likes = res.data.likes
+    post.value.liked_by_user = res.data.liked
+  } catch (err) {
+    console.error('Gabim ne like:', err)
   }
+}
 
+// Funksioni per te shtuar nje koment
+const submitComment = async () => {
+  if (!auth.user) return router.push('/login')
   if (!commentText.value.trim()) return
   submitting.value = true
   try {
-    await axios.post(`/api/posts/${post.value.id}/comments`, {
-      content: commentText.value
-    })
+    await axios.post(`/api/posts/${post.value.id}/comments`, { content: commentText.value })
     commentText.value = ''
     await fetchComments()
-  } catch (error) {
-    console.error('Error posting comment:', error)
+  } catch (err) {
+    console.error('Gabim ne shtimin e komentit:', err)
   } finally {
     submitting.value = false
   }
 }
 
-// Post reply
+// Funksioni per te derguar nje reply
 const submitReply = async (parentId: number) => {
-  if (!auth.user) {
-    router.push('/login')
-    return
-  }
-
   if (!replyText.value.trim()) return
   try {
     await axios.post(`/api/posts/${post.value.id}/comments`, {
@@ -80,56 +82,20 @@ const submitReply = async (parentId: number) => {
     replyText.value = ''
     replyingTo.value = null
     await fetchComments()
-  } catch (error) {
-    console.error('Error posting reply:', error)
+  } catch (err) {
+    console.error('Gabim ne reply:', err)
   }
 }
 
+// Anulo reply
 const cancelReply = () => {
-  replyingTo.value = null
   replyText.value = ''
+  replyingTo.value = null
 }
 
-// Edit
-const startEdit = (comment: any) => {
-  isEditing.value = comment.id
-  editedContent.value = comment.content
-}
-
-const cancelEdit = () => {
-  isEditing.value = null
-  editedContent.value = ''
-}
-
-const updateComment = async (id: number) => {
-  if (!editedContent.value.trim()) return
-  try {
-    await axios.put(`/api/comments/${id}`, { content: editedContent.value })
-    await fetchComments()
-    cancelEdit()
-  } catch (error) {
-    console.error('Error updating comment:', error)
-  }
-}
-
-// Delete
-const deleteComment = async (id: number) => {
-  if (!confirm('Are you sure you want to delete this comment?')) return
-  try {
-    await axios.delete(`/api/comments/${id}`)
-    await fetchComments()
-  } catch (error) {
-    console.error('Error deleting comment', error)
-  }
-}
-
-// Like Comment
+// Funksioni per te pelqyer nje koment
 const likeComment = async (id: number) => {
-  if (!auth.user) {
-    router.push('/login')
-    return
-  }
-
+  if (!auth.user) return router.push('/login')
   try {
     const res = await axios.post(`/api/comments/${id}/like`)
     const updated = comments.value.find(c => c.id === id)
@@ -137,29 +103,47 @@ const likeComment = async (id: number) => {
       updated.likes = res.data.likes
       updated.liked = res.data.liked
     }
-  } catch (error) {
-    console.error('Error liking comment:', error)
+  } catch (err) {
+    console.error('Gabim ne like te komentit:', err)
   }
 }
 
-// Like post
-const likePost = async () => {
-  if (!auth.user) {
-    router.push('/login')
-    return
-  }
+// Funksioni per te filluar redaktimin e nje komenti
+const startEdit = (comment: any) => {
+  isEditing.value = comment.id
+  editedContent.value = comment.content
+}
 
-  if (!post.value?.id) return
+// Anulo editimin
+const cancelEdit = () => {
+  isEditing.value = null
+  editedContent.value = ''
+}
 
+// Perditeson nje koment ekzistues
+const updateComment = async (id: number) => {
+  if (!editedContent.value.trim()) return
   try {
-    const res = await axios.post(`/api/posts/${post.value.id}/like`)
-    post.value.likes = res.data.likes
-    post.value.liked_by_user = res.data.liked
-  } catch (error) {
-    console.error('Error liking post:', error)
+    await axios.put(`/api/comments/${id}`, { content: editedContent.value })
+    await fetchComments()
+    cancelEdit()
+  } catch (err) {
+    console.error('Gabim gjate perditesimit te komentit:', err)
   }
 }
 
+// Fshin nje koment
+const deleteComment = async (id: number) => {
+  if (!confirm('Are you sure you want to delete this comment?')) return
+  try {
+    await axios.delete(`/api/comments/${id}`)
+    await fetchComments()
+  } catch (err) {
+    console.error('Gabim gjate fshirjes se komentit:', err)
+  }
+}
+
+// E marrim postin dhe komentet kur faqja ngarkohet
 onMounted(async () => {
   await fetchPost()
   await fetchComments()
@@ -168,182 +152,156 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 py-12">
-    <div v-if="loading" class="text-center text-gray-600 text-lg">Loading post...</div>
+  <div class="bg-neutral-950 text-white min-h-screen py-16 px-4">
+    <div v-if="loading" class="text-center text-gray-400">Loading post...</div>
 
-    <div v-else-if="post" class="space-y-10">
-      <!-- Header -->
-      <div class="text-center space-y-3">
-        <h1 class="text-5xl font-extrabold text-gray-900 leading-tight">{{ post.title }}</h1>
-        <p class="text-gray-500">
-          Published on {{ new Date(post.created_at).toLocaleDateString() }} by
-          <span class="font-medium text-gray-700">{{ post.user?.name || 'Unknown' }}</span>
-        </p>
+    <div v-else class="max-w-3xl mx-auto space-y-12">
+      <!-- Titulli dhe autori -->
+      <div class="space-y-1 text-left">
+        <h1 class="text-3xl sm:text-4xl font-bold text-white">
+          {{ post.title }}
+        </h1>
+        <div class="text-sm text-gray-400 flex items-center gap-2">
+          <span class="">{{ new Date(post.created_at).toLocaleDateString() }}</span>
+          <span>·</span>
+          <span class="flex items-center gap-1">
+            <i class="text-purple-400"></i>
+            <span class="text-purple-300 font-medium">{{ post.user?.name }}</span>
+          </span>
+        </div>
       </div>
 
-      <!-- Image -->
-      <div v-if="post.image">
+      <!-- Imazhi me zemren e pozicionuar siper djathtas -->
+      <div class="relative overflow-hidden rounded-xl shadow-xl">
         <img
           :src="`http://127.0.0.1:8000/storage/${post.image}`"
-          alt="Post Image"
-          class="w-full max-h-[500px] object-cover rounded-lg shadow-md"
+          class="w-full object-cover max-h-[500px]"
         />
-      </div>
-
-      <!-- Content -->
-      <div class="prose prose-lg lg:prose-xl max-w-none mx-auto text-gray-800" v-html="post.content"></div>
-
-      <!-- Like Section -->
-      <div class="flex justify-center">
+        <!-- Zemra per like brenda imazhit siper djathtas -->
         <button
           @click="likePost"
-          class="flex items-center space-x-2 text-gray-600 hover:text-red-600 transition text-xl"
+          class="absolute top-4 right-4 bg-neutral-900/70 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-md hover:scale-105 transition"
         >
-          <span :class="post.liked_by_user ? 'text-red-600' : 'text-gray-400'">❤️</span>
-          <span>{{ post.likes }}</span>
+          <i :class="[post.liked_by_user ? 'fas text-pink-500' : 'far text-gray-400', 'fa-heart']"></i>
+          <span class="text-sm">{{ post.likes }}</span>
         </button>
       </div>
 
-      <!-- Comments -->
-      <div class="mt-16" id="comments">
-        <h2 class="text-2xl font-bold mb-4">Comments ({{ comments.length }})</h2>
+      <!-- Seksioni i pershkrimit poshte fotos -->
+      <div class="relative -mt-6 px-4 sm:px-0">
+        <div class="max-w-3xl mx-auto bg-neutral-900/80 border-l-4 border-purple-600 rounded-xl px-6 py-4 shadow-md">
+          <h3 class="text-sm uppercase tracking-wider text-purple-400 font-semibold mb-2">Description</h3>
+          <p class="text-gray-200 text-base leading-relaxed">
+            {{ post.content }}
+          </p>
+        </div>
+      </div>
 
-        <!-- Comment form -->
-        <div v-if="auth.user" class="mb-8">
+      <!-- Komentet -->
+      <section class="space-y-8">
+        <h2 class="text-2xl font-semibold">Comments ({{ comments.length }})</h2>
+
+        <!-- Forma per koment -->
+        <div v-if="auth.user" class="space-y-2">
           <textarea
             v-model="commentText"
             rows="3"
-            class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-white placeholder-gray-400"
             placeholder="Write a comment..."
           ></textarea>
           <button
-            class="mt-2 bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
             @click="submitComment"
             :disabled="submitting"
+            class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded transition"
           >
             {{ submitting ? 'Posting...' : 'Post Comment' }}
           </button>
         </div>
-        <div v-else class="text-gray-500 mb-6">You must be logged in to comment.</div>
+        <div v-else class="text-sm text-gray-500">You must be logged in to comment.</div>
 
-        <!-- Comment list -->
-        <div v-if="comments.length">
+        <!-- Lista e komenteve -->
+        <div class="space-y-6">
           <div
             v-for="comment in comments"
             :key="comment.id"
-            class="mb-6 p-5 bg-gray-50 border border-gray-200 rounded-lg shadow-sm"
+            class="bg-neutral-900 border border-neutral-800 p-4 rounded-xl space-y-3"
           >
-            <!-- Edit -->
-            <div v-if="isEditing === comment.id" class="mb-4">
-              <textarea
-                v-model="editedContent"
-                rows="2"
-                class="w-full p-2 border rounded resize-none"
-              ></textarea>
-              <div class="flex space-x-2 mt-2">
-                <button
-                  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                  @click="updateComment(comment.id)"
-                >
-                  Save
-                </button>
-                <button
-                  class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
-                  @click="cancelEdit"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-
-            <!-- Normal Comment -->
-            <template v-else>
-              <p class="text-gray-800 mb-2">{{ comment.content }}</p>
-            </template>
-
-            <div class="flex justify-between items-center text-sm text-gray-500">
-              <div class="flex items-center space-x-2">
-                <span class="font-medium text-gray-700">{{ comment.user?.name || 'Anonymous' }}</span>
-                <span class="text-xs text-gray-400">· {{ new Date(comment.created_at).toLocaleString() }}</span>
-              </div>
-
-              <button
-                @click="likeComment(comment.id)"
-                :title="comment.liked ? 'Unlike this comment' : 'Like this comment'"
-                class="flex items-center space-x-1 text-sm focus:outline-none cursor-pointer"
-              >
-                <span
-                  :class="[comment.liked ? 'text-blue-600' : 'text-gray-400']"
-                  class="text-lg transition"
-                >👍</span>
-                <span class="text-gray-700 font-medium">{{ comment.likes }}</span>
+            <!-- Info komentuesi -->
+            <div class="flex justify-between items-center text-sm text-gray-400">
+              <span><span class="text-purple-400 font-semibold">{{ comment.user?.name }}</span> · {{ new Date(comment.created_at).toLocaleString() }}</span>
+              <button @click="likeComment(comment.id)">
+                <i :class="[comment.liked ? 'fas text-blue-500' : 'far text-gray-500', 'fa-thumbs-up']"></i>
+                <span class="ml-1">{{ comment.likes }}</span>
               </button>
             </div>
 
-            <!-- Actions -->
-            <div class="mt-3 text-sm flex space-x-4">
-              <button @click="replyingTo = comment.id" class="text-gray-600 hover:underline">Reply</button>
-              <button
-                v-if="auth.user?.id === comment.user_id"
-                @click="startEdit(comment)"
-                class="text-blue-600 hover:underline"
-              >Edit</button>
-              <button
-                v-if="auth.user?.id === comment.user_id"
-                @click="deleteComment(comment.id)"
-                class="text-red-600 hover:underline"
-              >Delete</button>
+            <!-- Permbajtja ose editimi -->
+            <div v-if="isEditing === comment.id" class="space-y-2">
+              <textarea
+                v-model="editedContent"
+                rows="2"
+                class="w-full bg-neutral-800 border border-purple-500 rounded px-3 py-2 text-white"
+                placeholder="Edit your comment..."
+              ></textarea>
+              <div class="flex gap-2">
+                <button
+                  @click="updateComment(comment.id)"
+                  class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-1 rounded"
+                >
+                  Save
+                </button>
+                <button @click="cancelEdit" class="text-gray-400 hover:underline">Cancel</button>
+              </div>
             </div>
 
-            <!-- Reply form -->
-            <div v-if="replyingTo === comment.id" class="mt-4">
+            <!-- Komenti normal -->
+            <p v-else class="text-white text-base">{{ comment.content }}</p>
+
+            <!-- Veprimet -->
+            <div class="text-sm space-x-4 text-gray-500">
+              <span @click="replyingTo = comment.id" class="hover:underline cursor-pointer">Reply</span>
+              <span
+                v-if="auth.user?.id === comment.user_id"
+                @click="startEdit(comment)"
+                class="hover:underline cursor-pointer text-blue-400"
+              >Edit</span>
+              <span
+                v-if="auth.user?.id === comment.user_id"
+                @click="deleteComment(comment.id)"
+                class="hover:underline cursor-pointer text-red-400"
+              >Delete</span>
+            </div>
+
+            <!-- Forma per reply -->
+            <div v-if="replyingTo === comment.id" class="space-y-2 mt-3">
               <textarea
                 v-model="replyText"
                 rows="2"
-                class="w-full p-2 border rounded resize-none"
+                class="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2 text-white"
                 placeholder="Write a reply..."
               ></textarea>
-              <div class="flex space-x-2 mt-1">
-                <button
-                  class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                  @click="submitReply(comment.id)"
-                >Reply</button>
-                <button class="text-sm text-gray-500" @click="cancelReply">Cancel</button>
+              <div class="flex gap-2">
+                <button @click="submitReply(comment.id)" class="bg-purple-600 text-white px-4 py-1 rounded hover:bg-purple-700">Reply</button>
+                <button @click="cancelReply" class="text-gray-400 hover:underline">Cancel</button>
               </div>
             </div>
 
             <!-- Replies -->
             <div
-              v-if="comment.replies && comment.replies.length"
-              class="ml-4 mt-4 border-l-2 border-gray-300 pl-4"
+              v-if="comment.replies?.length"
+              class="pl-4 mt-4 border-l-2 border-neutral-700 space-y-4"
             >
-              <div
-                v-for="reply in comment.replies"
-                :key="reply.id"
-                class="mb-3"
-              >
-                <div class="text-gray-800 text-sm">{{ reply.content }}</div>
-                <div class="text-xs text-gray-500">
-                  {{ reply.user?.name || 'Anonymous' }} ·
+              <div v-for="reply in comment.replies" :key="reply.id">
+                <div class="text-sm text-gray-400">
+                  <strong class="text-purple-400">{{ reply.user?.name }}</strong> ·
                   {{ new Date(reply.created_at).toLocaleString() }}
                 </div>
+                <p class="text-white text-sm">{{ reply.content }}</p>
               </div>
             </div>
           </div>
         </div>
-
-        <div v-else class="text-gray-500">No comments yet.</div>
-      </div>
+      </section>
     </div>
   </div>
 </template>
-
-<style scoped>
-textarea {
-  font-family: inherit;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-</style>

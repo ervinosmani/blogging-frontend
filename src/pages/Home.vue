@@ -115,7 +115,7 @@ onMounted(fetchPosts)
         to="/posts/create"
         class="inline-block bg-gradient-to-r from-pink-600 to-purple-600 px-6 py-3 rounded-full font-semibold hover:scale-105 transition"
       >
-        ✍️ Start Writing
+       Start Writing
       </RouterLink>
     </section>
 

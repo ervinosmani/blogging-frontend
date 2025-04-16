@@ -3,33 +3,36 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/api'
 
+// Fushat e postimit
 const title = ref('')
 const content = ref('')
 const image = ref<File | null>(null)
 const category = ref('')
 const isPublished = ref(false)
 
+// Kategorite
 const categories = ref<string[]>([])
 
+// Gjendjet
 const error = ref('')
 const message = ref('')
 const loading = ref(false)
 
 const router = useRouter()
 
+// Merr kategorite nga API
 const fetchCategories = async () => {
-    try {
-        const res = await api.get('/api/categories')
-        categories.value = res.data
-    } catch (err) {
-        console.error('Failed to load categories:', err)
-    }
+  try {
+    const res = await api.get('/api/categories')
+    categories.value = res.data
+  } catch (err) {
+    console.error('Error loading categories:', err)
+  }
 }
 
-onMounted(() => {
-    fetchCategories()
-})
+onMounted(fetchCategories)
 
+// Ruan imazhin e zgjedhur
 const handleFileUpload = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files?.length) {
@@ -37,85 +40,88 @@ const handleFileUpload = (e: Event) => {
   }
 }
 
+// Dergon formularin
 const handleSubmit = async () => {
-    error.value = ''
-    message.value = ''
-    loading.value = true
+  error.value = ''
+  message.value = ''
+  loading.value = true
 
-    try {
-        const formData = new FormData()
-        formData.append('title', title.value)
-        formData.append('content', content.value)
-        formData.append('category', category.value)
-        formData.append('is_published', isPublished.value ? '1' : '0')
+  try {
+    const formData = new FormData()
+    formData.append('title', title.value)
+    formData.append('content', content.value)
+    formData.append('category', category.value)
+    formData.append('is_published', isPublished.value ? '1' : '0')
 
-        if (image.value) {
-            formData.append('image', image.value)
-        }
+    if (image.value) formData.append('image', image.value)
 
-        await api.post('/api/posts', formData)
+    await api.post('/api/posts', formData)
 
-        message.value = 'Post created successfully!'
-        router.push('/dashboard')
-    } catch (err: any) {
-        error.value = err.response?.data?.message || 'Failed to create post.'
-    } finally {
-        loading.value = false
-    }
+    message.value = 'Post created successfully!'
+    router.push('/dashboard')
+  } catch (err: any) {
+    error.value = err.response?.data?.message || 'Failed to create post.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
 <template>
-  <div class="h-screen overflow-hidden bg-gray-50 px-4 pt-20">
-    <div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 shadow rounded-md">
-      <h1 class="text-2xl font-bold mb-6">Create a New Post</h1>
+  <div class="min-h-screen bg-neutral-950 text-white px-4 py-20">
+    <div class="max-w-3xl mx-auto bg-gradient-to-br from-neutral-900 to-neutral-800 p-8 rounded-2xl border border-neutral-800 shadow-xl">
+      <h1 class="text-3xl font-bold text-purple-400 mb-6 text-center">Create New Post</h1>
 
-      <form @submit.prevent="handleSubmit" class="space-y-5">
-        <!-- Title -->
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <!-- Titulli -->
         <div>
-          <label class="block mb-1 font-medium text-sm">Title</label>
-          <input v-model="title" type="text" class="w-full p-2 border rounded" required />
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Title</label>
+          <input v-model="title" type="text" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
 
-        <!-- Content -->
+        <!-- Permbajtja -->
         <div>
-          <label class="block mb-1 font-medium text-sm">Content</label>
-          <textarea v-model="content" rows="5" class="w-full p-2 border rounded resize-none" required></textarea>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Content</label>
+          <textarea v-model="content" rows="5" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
         </div>
 
-        <!-- Category -->
+        <!-- Kategoria -->
         <div>
-          <label class="block mb-1 font-medium text-sm">Category</label>
-          <select v-model="category" class="w-full p-2 border rounded" required>
-            <option value="" disabled>Select a category</option>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Category</label>
+          <select v-model="category" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <option disabled value="">Select a category</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
         </div>
 
-        <!-- Image -->
+        <!-- Imazhi -->
         <div>
-          <label class="block mb-1 font-medium text-sm">Image (optional)</label>
-          <input type="file" @change="handleFileUpload" accept="image/*" class="w-full" />
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Upload Image (optional)</label>
+          <input type="file" @change="handleFileUpload" accept="image/*"
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 file:bg-purple-600 file:text-white file:px-4 file:py-1 file:rounded file:border-0" />
         </div>
 
-        <!-- Checkbox -->
-        <div class="flex items-center space-x-2">
-          <input id="published" type="checkbox" v-model="isPublished" class="form-checkbox" />
-          <label for="published" class="text-sm">Publish now</label>
+        <!-- Checkbox publikimi -->
+        <div class="flex items-center gap-3">
+          <input id="publish" type="checkbox" v-model="isPublished"
+            class="w-4 h-4 text-purple-600 bg-neutral-800 border-neutral-700 rounded focus:ring-purple-500" />
+          <label for="publish" class="text-sm text-purple-300">Publish immediately</label>
         </div>
 
-        <!-- Feedback -->
-        <div v-if="message && !error" class="bg-green-100 text-green-800 px-4 py-2 rounded">
+        <!-- Mesazhet -->
+        <div v-if="message && !error" class="text-green-400 font-medium text-sm">
           {{ message }}
         </div>
-        <div v-else-if="error" class="text-red-600 text-sm">{{ error }}</div>
+        <div v-else-if="error" class="text-red-400 font-medium text-sm">
+          {{ error }}
+        </div>
 
         <!-- Submit -->
-        <button
-          type="submit"
-          class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-          :disabled="loading"
-        >
+        <button type="submit" :disabled="loading"
+          class="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-2 px-6 rounded-full font-semibold hover:scale-105 transition">
           {{ loading ? 'Creating...' : 'Create Post' }}
         </button>
       </form>

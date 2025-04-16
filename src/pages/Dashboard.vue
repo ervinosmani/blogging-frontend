@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/api'
 
@@ -7,14 +7,15 @@ import api from '../api/api'
 const posts = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
-const router = useRouter()
 
-// Variablat per pagination
+// Faqja dhe totali
 const page = ref(1)
 const totalPages = ref(1)
-
 const perPage = 10
-// Merr postimet e mia nga backend
+
+const router = useRouter()
+
+// Ngarkon postimet e mia nga API
 const fetchMyPosts = async () => {
   loading.value = true
   try {
@@ -28,10 +29,9 @@ const fetchMyPosts = async () => {
   }
 }
 
-// Fshije nje postim
+// Fshij nje postim
 const handleDelete = async (id: number) => {
   if (!confirm('Are you sure you want to delete this post?')) return
-
   try {
     await api.delete(`/api/posts/${id}`)
     posts.value = posts.value.filter(p => p.id !== id)
@@ -52,110 +52,96 @@ const handlePublish = async (slug: string) => {
   }
 }
 
-// Ngarko te dhenat kur komponenti ngarkohet
-onMounted(fetchMyPosts)
+// Rifresko postimet kur ndryshon faqja
+watch(page, () => fetchMyPosts())
 
-// Rifresko te dhenat sa here qe ndryshon faqja
-watch(page, () => {
-  fetchMyPosts()
-})
+// Ne montim, ngarko te dhenat
+onMounted(fetchMyPosts)
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-12">
+  <div class="bg-neutral-950 min-h-screen py-12 px-4 text-white">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-      <h2 class="text-3xl font-bold text-gray-900">Your Posts</h2>
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 px-4">
+      <h2 class="text-3xl font-bold text-white">My Posts</h2>
       <RouterLink
         to="/posts/create"
-        class="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md font-medium transition"
       >
         + Create New
       </RouterLink>
     </div>
 
-    <!-- Gjendja: Loading -->
-    <div v-if="loading" class="text-center text-gray-500">Loading your posts...</div>
+    <!-- Gjendja e ngarkimit -->
+    <div v-if="loading" class="text-center text-gray-400">Loading your posts...</div>
+    <div v-else-if="error" class="text-center text-red-500">{{ error }}</div>
+    <div v-else-if="posts.length === 0" class="text-center text-gray-400">You haven't created any posts yet.</div>
 
-    <!-- Gjendja: Error -->
-    <div v-else-if="error" class="text-center text-red-600">{{ error }}</div>
-
-    <!-- Gjendja: Nuk ka postime -->
-    <div v-else-if="posts.length === 0" class="text-center text-gray-400">
-      You haven't created any posts yet.
-    </div>
-
-    <!-- Lista me postime -->
-    <div v-else class="overflow-x-auto">
-      <table class="min-w-full bg-white rounded-lg shadow-sm overflow-hidden">
-        <thead class="bg-gray-100 text-sm text-left">
-          <tr>
-            <th class="px-4 py-3">Title</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Likes</th>
-            <th class="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-  <tr
-    v-for="post in posts"
-    :key="post.id"
-    class="border-t text-sm hover:bg-gray-50 transition"
-  >
-    <td class="px-4 py-3 font-medium text-gray-800" data-label="Title">{{ post.title }}</td>
-    <td class="px-4 py-3" data-label="Status">
-      <span
-        :class="post.status === 'published'
-          ? 'bg-green-100 text-green-700'
-          : 'bg-yellow-100 text-yellow-700'"
-        class="px-2 py-1 rounded-full text-xs font-semibold capitalize"
+    <!-- Lista e postimeve -->
+    <div v-else class="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
+      <div
+        v-for="post in posts"
+        :key="post.id"
+        class="bg-neutral-900 border border-neutral-800 rounded-xl p-5 space-y-4 shadow hover:shadow-lg transition"
       >
-        {{ post.status }}
-      </span>
-    </td>
+        <!-- Titulli + Statusi -->
+        <div class="flex justify-between items-start">
+          <h3 class="text-lg font-semibold text-white break-words max-w-[70%]">{{ post.title }}</h3>
+          <span
+            :class="post.status === 'published'
+              ? 'bg-green-600 text-white'
+              : 'bg-yellow-500 text-black'"
+            class="px-2 py-0.5 text-xs rounded-full font-semibold capitalize"
+          >
+            {{ post.status }}
+          </span>
+        </div>
 
-    <td class="px-4 py-3" data-label="Likes">{{ post.likes_count ?? 0 }}</td>
+        <!-- Likes + Data -->
+        <div class="text-sm text-gray-400 flex justify-between">
+          <span>{{ post.likes_count ?? 0 }} likes</span>
+          <span>{{ new Date(post.created_at).toLocaleDateString() }}</span>
+        </div>
 
-    <td class="px-4 py-3 space-x-3 whitespace-nowrap" data-label="Actions">
-      <RouterLink
-        :to="`/posts/${post.slug}/edit`"
-        class="text-blue-600 hover:underline font-medium"
-      >
-        Edit
-      </RouterLink>
-      <button
-        @click="handleDelete(post.id)"
-        class="text-red-600 hover:underline font-medium"
-      >
-        Delete
-      </button>
-      <button
-        v-if="post.status === 'draft'"
-        @click="handlePublish(post.slug)"
-        class="text-green-600 hover:underline font-medium"
-      >
-        Publish
-      </button>
-    </td>
-  </tr>
-</tbody>
-      </table>
+        <!-- Veprimet -->
+        <div class="flex flex-wrap justify-end gap-3 text-sm font-medium mt-4">
+          <RouterLink
+            :to="`/posts/${post.slug}/edit`"
+            class="text-blue-400 hover:underline"
+          >
+            Edit
+          </RouterLink>
+          <span
+            @click="handleDelete(post.id)"
+            class="text-red-400 hover:underline cursor-pointer"
+          >
+            Delete
+          </span>
+          <span
+            v-if="post.status === 'draft'"
+            @click="handlePublish(post.slug)"
+            class="text-green-400 hover:underline cursor-pointer"
+          >
+            Publish
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="mt-6 flex justify-center gap-2">
+    <div v-if="totalPages > 1" class="mt-12 flex justify-center gap-4">
       <button
         @click="page--"
         :disabled="page === 1"
-        class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+        class="px-4 py-2 rounded bg-neutral-800 border border-neutral-700 hover:bg-neutral-700 disabled:opacity-50"
       >
         « Previous
       </button>
-      <span class="px-3 py-1 border rounded bg-white">{{ page }}</span>
+      <span class="text-sm text-gray-300 px-4 py-2">{{ page }}</span>
       <button
         @click="page++"
         :disabled="page === totalPages"
-        class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+        class="px-4 py-2 rounded bg-neutral-800 border border-neutral-700 hover:bg-neutral-700 disabled:opacity-50"
       >
         Next »
       </button>
@@ -163,7 +149,7 @@ watch(page, () => {
   </div>
 </template>
 
-<style scoped>
+<!-- <style scoped>
 /* Stilimi responsive i tabeles per mobile */
 @media (max-width: 640px) {
   table {
@@ -229,4 +215,4 @@ td[data-label="Actions"] {
     margin: 0;
     margin-left: 123px;
   }
-</style>
+</style> -->

@@ -3,10 +3,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/api'
 
+// Router
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
 
+// Te dhenat e postimit per editim
 const postId = ref<number | null>(null)
 const title = ref('')
 const content = ref('')
@@ -16,6 +18,9 @@ const imageUrl = ref('')
 const error = ref('')
 const loading = ref(true)
 
+const categories = ref<string[]>([])
+
+// Ngarko te dhenat e postimit
 const fetchPost = async () => {
   try {
     const res = await api.get(`/api/posts/slug/${slug}`)
@@ -24,7 +29,7 @@ const fetchPost = async () => {
     content.value = post.content
     category.value = post.category
     postId.value = post.id
-    imageUrl.value = post.image // vetem emri ose path i imazhit
+    imageUrl.value = post.image
   } catch (err) {
     error.value = 'Post not found'
   } finally {
@@ -32,6 +37,25 @@ const fetchPost = async () => {
   }
 }
 
+// Ngarko kategorite ekzistuese
+const fetchCategories = async () => {
+  try {
+    const res = await api.get('/api/categories')
+    categories.value = res.data
+  } catch (err) {
+    console.error('Error loading categories:', err)
+  }
+}
+
+// Perpunon imazhin kur ndryshohet
+const handleImageChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target?.files?.length) {
+    image.value = target.files[0]
+  }
+}
+
+// Dergon te dhenat e perditesuara
 const handleUpdate = async () => {
   if (!postId.value) return
 
@@ -39,11 +63,13 @@ const handleUpdate = async () => {
   formData.append('title', title.value)
   formData.append('content', content.value)
   formData.append('category', category.value)
-  if (image.value) formData.append('image', image.value)
+  if (image.value) {
+    formData.append('image', image.value)
+  }
 
   try {
     await api.post(`/api/posts/${postId.value}?_method=PUT`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
     router.push('/dashboard')
   } catch (err: any) {
@@ -51,67 +77,65 @@ const handleUpdate = async () => {
   }
 }
 
-const handleImageChange = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  if (target && target.files && target.files.length > 0) {
-    image.value = target.files[0]
-  }
-}
-
-onMounted(fetchPost)
+onMounted(() => {
+  fetchPost()
+  fetchCategories()
+})
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded shadow">
-    <h2 class="text-xl font-bold mb-4">Edit Post</h2>
+  <div class="min-h-screen bg-neutral-950 text-white px-4 py-20">
+    <div class="max-w-3xl mx-auto bg-gradient-to-br from-neutral-900 to-neutral-800 p-8 rounded-2xl border border-neutral-800 shadow-xl">
+      <h1 class="text-3xl font-bold text-purple-400 mb-6 text-center">Edit Post</h1>
 
-    <div v-if="error" class="text-red-600 mb-4">{{ error }}</div>
-    <div v-if="loading" class="text-gray-500">Loading...</div>
+      <div v-if="loading" class="text-center text-gray-400">Loading...</div>
+      <div v-if="error" class="text-red-400 text-center font-medium mb-4">{{ error }}</div>
 
-    <form @submit.prevent="handleUpdate" v-if="!loading">
-      <label class="block mb-2 font-semibold">Title</label>
-      <input v-model="title" type="text" class="input" required />
+      <form v-if="!loading && !error" @submit.prevent="handleUpdate" class="space-y-6">
+        <!-- Titulli -->
+        <div>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Title</label>
+          <input v-model="title" type="text" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500" />
+        </div>
 
-      <label class="block mb-2 font-semibold">Content</label>
-      <textarea v-model="content" class="input" rows="4" required></textarea>
+        <!-- Permbajtja -->
+        <div>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Content</label>
+          <textarea v-model="content" rows="5" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"></textarea>
+        </div>
 
-      <label class="block mb-2 font-semibold">Category</label>
-      <input v-model="category" type="text" class="input" required />
+        <!-- Kategoria -->
+        <div>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Category</label>
+          <select v-model="category" required
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <option disabled value="">Select a category</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+          </select>
+        </div>
 
-      <div v-if="imageUrl" class="mb-4">
-        <label class="block font-semibold mb-1">Current Image</label>
-        <img
-          :src="`http://127.0.0.1:8000/storage/${imageUrl}`"
-          alt="Current image"
-          class="w-32 h-auto rounded border"
-        />
-      </div>
+        <!-- Imazhi ekzistues -->
+        <div v-if="imageUrl" class="space-y-1">
+          <label class="block text-sm font-semibold text-purple-300">Current Image</label>
+          <img :src="`http://127.0.0.1:8000/storage/${imageUrl}`" alt="Current image"
+            class="w-full max-h-64 object-cover rounded-lg border border-neutral-700" />
+        </div>
 
-      <label class="block mb-2 font-semibold">Change Image</label>
-      <input @change="handleImageChange" type="file" class="input" accept="image/*" />
+        <!-- Zgjidh nje imazh te ri -->
+        <div>
+          <label class="block mb-1 text-sm font-semibold text-purple-300">Change Image</label>
+          <input type="file" @change="handleImageChange" accept="image/*"
+            class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 file:bg-purple-600 file:text-white file:px-4 file:py-1 file:rounded file:border-0" />
+        </div>
 
-      <button class="btn btn-primary mt-4">Update Post</button>
-    </form>
+        <!-- Submit -->
+        <button type="submit"
+          class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-6 rounded-full font-semibold hover:scale-105 transition">
+          Save Changes
+        </button>
+      </form>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.input {
-  display: block;
-  margin-bottom: 1rem;
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.btn {
-  background-color: #2563eb;
-  color: white;
-  padding: 0.5rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.btn:hover {
-  background-color: #1d4ed8;
-}
-</style>

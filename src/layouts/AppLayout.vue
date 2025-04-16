@@ -3,11 +3,11 @@ import Navbar from '../components/Navbar.vue'
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800">
-    <!-- Navbar -->
+  <div class="min-h-screen bg-gradient-to-tr from-black via-neutral-900 to-purple-900 text-white">
+    <!-- Navbar ne krye -->
     <Navbar />
 
-    <!-- Content injected by routes -->
+    <!-- Permbajtja dinamike e faqeve -->
     <main class="p-6">
       <RouterView />
     </main>

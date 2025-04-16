@@ -7,10 +7,10 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
-// Toggle per hamburger menu ne mobile
+// Gjendja per menyne mobile
 const isOpen = ref(false)
 
-// Logout me konfirmim
+// Funksioni per logout me konfirmim
 const handleLogout = async () => {
   if (confirm('Are you sure you want to log out?')) {
     await auth.logout()
@@ -18,27 +18,27 @@ const handleLogout = async () => {
   }
 }
 
-// Funksion qe kthen klasen aktive per link
+// Funksioni qe vendos klasen aktive per link
 const linkClass = (path: string) => {
   return route.path === path
-    ? 'text-blue-600 font-semibold'
-    : 'text-gray-700 hover:text-blue-600'
+    ? 'text-purple-500 font-semibold'
+    : 'text-gray-300 hover:text-purple-400 transition'
 }
 </script>
 
 <template>
-  <!-- Sticky navbar ne krye te faqes -->
-  <nav class="bg-white shadow-md sticky top-0 z-50">
+  <!-- Navbar sticky -->
+  <header class="bg-neutral-900 text-white sticky top-0 z-50 shadow-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
       
-      <!-- Logo (e thjeshte, jo klikues) -->
-      <div class="text-2xl font-bold text-blue-600 tracking-tight select-none">
-        Blog<span class="text-gray-800">Platform</span>
-      </div>
+      <!-- Logo -->
+      <RouterLink to="/" class="text-2xl font-bold text-purple-500">
+        Blog<span class="text-white">Platform</span>
+      </RouterLink>
 
-      <!-- Hamburger per mobile -->
+      <!-- Hamburger mobile -->
       <button
-        class="sm:hidden text-gray-700 focus:outline-none"
+        class="sm:hidden text-gray-300 focus:outline-none"
         @click="isOpen = !isOpen"
         aria-label="Toggle menu"
       >
@@ -52,8 +52,8 @@ const linkClass = (path: string) => {
         </svg>
       </button>
 
-      <!-- Linket (desktop) -->
-      <div class="hidden sm:flex space-x-6 items-center text-sm font-medium">
+      <!-- Menu desktop -->
+      <nav class="hidden sm:flex items-center gap-6 text-sm">
         <RouterLink :to="'/'" :class="linkClass('/')">Home</RouterLink>
 
         <template v-if="!auth.user">
@@ -63,18 +63,18 @@ const linkClass = (path: string) => {
 
         <template v-else>
           <RouterLink :to="'/dashboard'" :class="linkClass('/dashboard')">Dashboard</RouterLink>
-          <button @click="handleLogout" class="text-red-500 hover:text-red-600">
+          <button @click="handleLogout" class="text-red-400 hover:text-red-500 transition">
             Logout
           </button>
         </template>
-      </div>
+      </nav>
     </div>
 
-    <!-- Mobile menu dropdown -->
+    <!-- Menu mobile -->
     <transition name="fade">
       <div
         v-if="isOpen"
-        class="sm:hidden bg-white px-6 py-4 border-t border-gray-200 space-y-4 text-sm font-medium flex flex-col"
+        class="sm:hidden bg-neutral-800 px-6 py-4 border-t border-neutral-700 flex flex-col gap-4 text-sm"
       >
         <RouterLink :to="'/'" :class="linkClass('/')">Home</RouterLink>
 
@@ -85,21 +85,17 @@ const linkClass = (path: string) => {
 
         <template v-else>
           <RouterLink :to="'/dashboard'" :class="linkClass('/dashboard')">Dashboard</RouterLink>
-          <button @click="handleLogout" class="text-left text-red-500 hover:text-red-600">
+          <button @click="handleLogout" class="text-left text-red-400 hover:text-red-500">
             Logout
           </button>
         </template>
       </div>
     </transition>
-  </nav>
+  </header>
 </template>
 
 <style scoped>
-/* Transicion smooth per animacionet */
-[v-cloak] {
-  display: none;
-}
-
+/* Transicion smooth per fade */
 .fade-enter-active,
 .fade-leave-active {
   transition: all 0.3s ease;
