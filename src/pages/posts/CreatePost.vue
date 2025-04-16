@@ -7,11 +7,11 @@ import api from '../../api/api'
 const title = ref('')
 const content = ref('')
 const image = ref<File | null>(null)
-const category = ref('')
+const categoryId = ref<number | null>(null)
 const isPublished = ref(false)
 
-// Kategorite
-const categories = ref<string[]>([])
+// Kategoritë (me id + name)
+const categories = ref<{ id: number; name: string }[]>([])
 
 // Gjendjet
 const error = ref('')
@@ -20,7 +20,7 @@ const loading = ref(false)
 
 const router = useRouter()
 
-// Merr kategorite nga API
+// Merr kategoritë nga API
 const fetchCategories = async () => {
   try {
     const res = await api.get('/api/categories')
@@ -40,7 +40,7 @@ const handleFileUpload = (e: Event) => {
   }
 }
 
-// Dergon formularin
+// Dërgon formularin
 const handleSubmit = async () => {
   error.value = ''
   message.value = ''
@@ -50,7 +50,7 @@ const handleSubmit = async () => {
     const formData = new FormData()
     formData.append('title', title.value)
     formData.append('content', content.value)
-    formData.append('category', category.value)
+    formData.append('category_id', String(categoryId.value))
     formData.append('is_published', isPublished.value ? '1' : '0')
 
     if (image.value) formData.append('image', image.value)
@@ -80,7 +80,7 @@ const handleSubmit = async () => {
             class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
 
-        <!-- Permbajtja -->
+        <!-- Përmbajtja -->
         <div>
           <label class="block mb-1 text-sm font-semibold text-purple-300">Content</label>
           <textarea v-model="content" rows="5" required
@@ -90,10 +90,10 @@ const handleSubmit = async () => {
         <!-- Kategoria -->
         <div>
           <label class="block mb-1 text-sm font-semibold text-purple-300">Category</label>
-          <select v-model="category" required
+          <select v-model="categoryId" required
             class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <option disabled value="">Select a category</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 

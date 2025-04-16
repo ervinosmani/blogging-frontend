@@ -3,32 +3,30 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../../api/api'
 
-// Router
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
 
-// Te dhenat e postimit per editim
 const postId = ref<number | null>(null)
 const title = ref('')
 const content = ref('')
-const category = ref('')
+const categoryId = ref<number | null>(null)
 const image = ref<File | null>(null)
 const imageUrl = ref('')
 const error = ref('')
 const loading = ref(true)
 
-const categories = ref<string[]>([])
+const categories = ref<{ id: number; name: string }[]>([])
 
-// Ngarko te dhenat e postimit
+// Ngarko postin ekzistues
 const fetchPost = async () => {
   try {
     const res = await api.get(`/api/posts/slug/${slug}`)
     const post = res.data
+    postId.value = post.id
     title.value = post.title
     content.value = post.content
-    category.value = post.category
-    postId.value = post.id
+    categoryId.value = post.category?.id || null
     imageUrl.value = post.image
   } catch (err) {
     error.value = 'Post not found'
@@ -37,7 +35,7 @@ const fetchPost = async () => {
   }
 }
 
-// Ngarko kategorite ekzistuese
+// Ngarko kategorite nga backend
 const fetchCategories = async () => {
   try {
     const res = await api.get('/api/categories')
@@ -47,7 +45,7 @@ const fetchCategories = async () => {
   }
 }
 
-// Perpunon imazhin kur ndryshohet
+// Ndryshimi i imazhit
 const handleImageChange = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target?.files?.length) {
@@ -55,14 +53,14 @@ const handleImageChange = (e: Event) => {
   }
 }
 
-// Dergon te dhenat e perditesuara
+// Update post
 const handleUpdate = async () => {
   if (!postId.value) return
 
   const formData = new FormData()
   formData.append('title', title.value)
   formData.append('content', content.value)
-  formData.append('category', category.value)
+  formData.append('category_id', String(categoryId.value))
   if (image.value) {
     formData.append('image', image.value)
   }
@@ -109,10 +107,10 @@ onMounted(() => {
         <!-- Kategoria -->
         <div>
           <label class="block mb-1 text-sm font-semibold text-purple-300">Category</label>
-          <select v-model="category" required
+          <select v-model="categoryId" required
             class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
             <option disabled value="">Select a category</option>
-            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
 

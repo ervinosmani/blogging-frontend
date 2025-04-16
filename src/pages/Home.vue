@@ -37,17 +37,23 @@ const isFiltering = computed(() => {
 // Kategoria e zgjedhur nga perdoruesi
 const selectedCategory = ref('all')
 
-// Lista e kategorive unike, llogaritet automatikisht nga postimet
-const categories = computed(() => {
-  const unique = new Set(posts.value.map(p => p.category))
-  return ['all', ...Array.from(unique)]
-})
+// Lista e kategorive unike
+const categories = ref([
+  'all',
+  'Photography',
+  'Technology',
+  'Lifestyle',
+  'Design',
+  'Education',
+  'Opinions',
+  'Productivity'
+])
 
 // Filtrim i kombinuar: nga kerkimi + nga kategoria
 const filteredPosts = computed(() => {
   return posts.value.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(search.value.toLowerCase())
-    const matchesCategory = selectedCategory.value === 'all' || post.category === selectedCategory.value
+    const matchesCategory = selectedCategory.value === 'all' || post.category?.name === selectedCategory.value
     return matchesSearch && matchesCategory
   })
 })
@@ -92,7 +98,7 @@ const fetchPosts = async (page = 1) => {
     // Kthe ne krye te faqes kur ngarkohen postet
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Deshtoi ngarkimi i postimeve.'
+    error.value = err.response?.data?.message || 'Failed to load posts.'
   } finally {
     loading.value = false
   }
@@ -175,7 +181,10 @@ onMounted(fetchPosts)
               <h2 class="text-lg font-semibold hover:text-purple-400 transition">{{ post.title }}</h2>
             </RouterLink>
             <div class="flex justify-between text-xs text-gray-400">
-              <span class="bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded-full">{{ post.category }}</span>
+              <!-- Paraqit kategorine -->
+              <span class="bg-purple-900/30 text-purple-400 px-2 py-0.5 rounded-full">
+                {{ post.category?.name || 'Uncategorized' }}
+              </span>
               <span>{{ new Date(post.created_at).toLocaleDateString() }}</span>
             </div>
             <div class="flex justify-between items-center mt-2 text-sm text-gray-400">

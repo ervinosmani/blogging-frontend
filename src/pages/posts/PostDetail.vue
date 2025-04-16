@@ -182,7 +182,12 @@ onMounted(async () => {
           @click="likePost"
           class="absolute top-4 right-4 bg-neutral-900/70 text-white px-3 py-1 rounded-full flex items-center gap-1 shadow-md hover:scale-105 transition"
         >
-          <i :class="[post.liked_by_user ? 'fas text-pink-500' : 'far text-gray-400', 'fa-heart']"></i>
+          <i
+            class="fa-heart"
+            :class="[
+              post.liked_by_user ? 'fas text-pink-500' : 'far text-gray-400',
+            ]"
+          ></i>
           <span class="text-sm">{{ post.likes }}</span>
         </button>
       </div>
