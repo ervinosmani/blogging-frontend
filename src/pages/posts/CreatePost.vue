@@ -10,7 +10,7 @@ const image = ref<File | null>(null)
 const categoryId = ref<number | null>(null)
 const isPublished = ref(false)
 
-// Kategoritë (me id + name)
+// Kategorite (me id + name)
 const categories = ref<{ id: number; name: string }[]>([])
 
 // Gjendjet
@@ -20,7 +20,7 @@ const loading = ref(false)
 
 const router = useRouter()
 
-// Merr kategoritë nga API
+// Merr kategorite nga API
 const fetchCategories = async () => {
   try {
     const res = await api.get('/api/categories')
@@ -40,7 +40,7 @@ const handleFileUpload = (e: Event) => {
   }
 }
 
-// Dërgon formularin
+// Dergon formularin
 const handleSubmit = async () => {
   error.value = ''
   message.value = ''
@@ -80,7 +80,7 @@ const handleSubmit = async () => {
             class="w-full bg-neutral-800 text-white px-4 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
 
-        <!-- Përmbajtja -->
+        <!-- Permbajtja -->
         <div>
           <label class="block mb-1 text-sm font-semibold text-purple-300">Content</label>
           <textarea v-model="content" rows="5" required
